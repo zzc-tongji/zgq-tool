@@ -71,7 +71,6 @@ const main = async () => {
       //   //
       //   // DESCRIPTION UPDATE - END
       //   if (value.description !== text) {
-      //     value.description = text;
       //     value.eagleUpdate = true;
       //   }
       // }
