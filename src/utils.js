@@ -220,7 +220,7 @@ const ocrToDescription = ({ ocrText = '', filename = '' }) => {
   text = text.replaceAll(/\s+/g, ' ');
   text = text.replace(/[.]?(asf)/, '#LOCATE#');
   text = text.replace(/[.]?(avi)/, '#LOCATE#');
-  text = text.replace(/[.]?(m[pP][dg4é]|[\s]m[pP])/, '#LOCATE#');
+  text = text.replace(/[.]?(m[dDpP][dg4é]|[\s]m[dDpP])/, '#LOCATE#');
   text = text.replace(/[.]?([wW][imnrvVwWy]{3}[wW]|[wW][imrwW][mnwW][wWvVy]|vV]im|[vV]i[vV]|[vV]i[wW]|[vV]iy|vV]mm|[vV]mn|[vV]m[vV]|[vV]m[wW]|[vV]my|[vV]rm|[vV]rn|[vV]r[vV]|[vV]r[wW]|wW]im|[wW]i[vV]|[wW]i[wW]|[wW]iy|[wW]mm|[wW]mn|[wW]m[vV]|[wW]m[wW]|[wW]my|[wW]rm|[wW]rn|[wW]r[vV]|[wW]r[wW]|[wW]iy|[wW]im)/, '#LOCATE#');
 
   text = text.replace(' - ', '#SPLIT#');
