@@ -196,7 +196,7 @@ const main = async () => {
       category.imageMap[url] = sortedValue;
       //
       console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image inbounded | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
-      fs.appendFileSync(log, `✅ image inbounded | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+      fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image inbounded | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
     }
     console.log(`✅ [${String(categoryNumber).padStart(4, '0')}] category inbounded | ${categoryId} | ${category.title}`);
     fs.appendFileSync(log, `✅ [${String(categoryNumber).padStart(4, '0')}] category inbounded | ${categoryId} | ${category.title}\n`, { encoding: 'utf-8' });
