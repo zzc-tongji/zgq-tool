@@ -55,7 +55,9 @@ const main = async () => {
       continue;
     }
     data[0].subCategoryList || (data[0].subCategoryList = []);
-    data[0].subCategoryList.push(categoryId);
+    if (!data[0].subCategoryList.includes(categoryId)) {
+      data[0].subCategoryList.push(categoryId);
+    }
     //
     data[categoryId] = { title, url: `${host}/search/index.html?cid=${categoryId}&page_size=500` };
     console.log(`✅ category fetched | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
@@ -78,7 +80,9 @@ const main = async () => {
       const categoryId = parseInt(/\/cid\/([0-9]+).html/.exec(url)[1]);
       //
       value.subCategoryList || (value.subCategoryList = []);
-      value.subCategoryList.push(categoryId);
+      if (!value.subCategoryList.includes(categoryId)) {
+        value.subCategoryList.push(categoryId);
+      }
       //
       if (data[categoryId]) {
         console.log(`☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
