@@ -143,6 +143,10 @@ const main = async () => {
       if (!(typeof value.description === 'string')) {
         value.description = utils.ocrToDescription({ ocrText: value.ocr['tesserart.en-US'] || value.ocr?.['umi.zh-CN'], filename: value.filename });
       }
+      // url
+      if (!value.eagleUrl) {
+        value.eagleUrl = url;
+      }
       // add to eagle
       if (!value.eagleId) {
         if (!eagleFolder) {
@@ -166,7 +170,7 @@ const main = async () => {
         const eagleItem = await eagle.post('/api/item/addFromPath', {
           path: filePath,
           name: value.eagleName,
-          website: url,
+          website: value.eagleUrl,
           tags: tags,
           annotation: JSON.stringify({
             title: value.filename,

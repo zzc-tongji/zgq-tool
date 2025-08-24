@@ -86,7 +86,7 @@ const main = async () => {
       await eagle.post('/api/item/update', {
         id: value.eagleId,
         name: value.eagleName,
-        url,
+        url: value.eagleUrl,
         annotation: JSON.stringify({
           title: value.filename,
           description: value.description,
