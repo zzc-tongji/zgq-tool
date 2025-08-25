@@ -66,11 +66,12 @@ const main = async () => {
       const value = category.imageMap[url];
       //
       // if (value.ocr && (typeof value.description === 'string') && !value.eagleFixed) {
-      //   let text = value.description;
+      //   let text;
       //   // DESCRIPTION UPDATE - BEGIN
-      //   //
+      //   // text = utils.ocrToDescription({ ocrText: value.ocr['tesserart.en-US'] || value.ocr?.['umi.zh-CN'], filename: value.filename });
       //   // DESCRIPTION UPDATE - END
       //   if (value.description !== text) {
+      //     value.description = text;
       //     value.eagleUpdate = true;
       //   }
       // }
