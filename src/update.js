@@ -32,6 +32,8 @@ const main = async () => {
   // prepare
   let eagleFolder = null;
   const json = `${allConfig.runtime.wkdir}${path.sep}data.zgq.json`;
+  const log = `${allConfig.runtime.wkdir}${path.sep}log.update.zgq.txt`;
+  fs.writeFileSync(log, '', { encoding: 'utf-8' });
   const errorLog = `${allConfig.runtime.wkdir}${path.sep}log.error.update.zgq.txt`;
   fs.writeFileSync(errorLog, '', { encoding: 'utf-8' });
   //
@@ -95,16 +97,20 @@ const main = async () => {
         }),
       }).catch((e) => {
         console.log(`🛑 image updated fail | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+        fs.appendFileSync(log, `🛑 image updated fail | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
         fs.appendFileSync(errorLog, `🛑 image updated fail | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
       });
       await utils.sleep(10);
       delete value.eagleUpdate;
       imageNumber += 1;
       console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image updated | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+      fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image updated | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
     }
     console.log(`✅ [${String(categoryNumber).padStart(4, '0')}] category updated | ${categoryId} | ${category.title}`);
+    fs.appendFileSync(log, `✅ [${String(categoryNumber).padStart(4, '0')}] category updated | ${categoryId} | ${category.title}\n`, { encoding: 'utf-8' });
   }
   console.log(`✅ finish updated ${imageNumber} image(s) in ${categoryNumber} category(s)`);
+  fs.appendFileSync(log, `✅ finish updated ${imageNumber} image(s) in ${categoryNumber} category(s)\n`, { encoding: 'utf-8' });
   clearInterval(timer);
   // write
   fs.writeFileSync(json, JSON.stringify(data, null, 2), { encoding: 'utf-8' });

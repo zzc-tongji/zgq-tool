@@ -39,8 +39,8 @@ const main = async () => {
   const json = `${allConfig.runtime.wkdir}${path.sep}data.zgq.json`;
   const log = `${allConfig.runtime.wkdir}${path.sep}log.inbound.zgq.txt`;
   fs.writeFileSync(log, '', { encoding: 'utf-8' });
-  const logError = `${allConfig.runtime.wkdir}${path.sep}log.error.inbound.zgq.txt`;
-  fs.writeFileSync(logError, '', { encoding: 'utf-8' });
+  const errorLog = `${allConfig.runtime.wkdir}${path.sep}log.error.inbound.zgq.txt`;
+  fs.writeFileSync(errorLog, '', { encoding: 'utf-8' });
   //
   let data;
   try {
@@ -143,7 +143,7 @@ const main = async () => {
         } catch (e) {
           console.log(`🛑 image inbound failed| ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}`);
           fs.appendFileSync(log, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-          fs.appendFileSync(logError, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          fs.appendFileSync(errorLog, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
           failed = true;
           imageFailNumber += 1;
         }
@@ -205,7 +205,7 @@ const main = async () => {
         }).catch((e) => {
           console.log(`🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}`);
           fs.appendFileSync(log, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-          fs.appendFileSync(logError, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          fs.appendFileSync(errorLog, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
           failed = true;
           imageFailNumber += 1;
         });
