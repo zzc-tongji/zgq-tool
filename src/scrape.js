@@ -55,8 +55,8 @@ const main = async () => {
     const title = aEl.attr('title');
     const categoryId = parseInt(/\/cid\/([0-9]+).html/.exec(url)[1]);
     if (data[categoryId]) {
-      console.log(`☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
-      fs.appendFileSync(log, `☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}\n`, { encoding: 'utf-8' });
+      // console.log(`☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
+      // fs.appendFileSync(log, `☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}\n`, { encoding: 'utf-8' });
       continue;
     }
     data[0].subCategoryList || (data[0].subCategoryList = []);
@@ -91,8 +91,8 @@ const main = async () => {
       }
       //
       if (data[categoryId]) {
-        console.log(`☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
-        fs.appendFileSync(log, `☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}\n`, { encoding: 'utf-8' });
+        // console.log(`☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
+        // fs.appendFileSync(log, `☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}\n`, { encoding: 'utf-8' });
         continue;
       }
       data[categoryId] = { title, url: `${host}/search/index.html?cid=${categoryId}&page_size=500`, nextCount: 1 };
@@ -121,8 +121,8 @@ const main = async () => {
           const src = encodeURI(aEl.attr('src'));
           category.imageMap || (category.imageMap = {});
           if (category.imageMap[src] || imageMap[src]) {
-            console.log(`☑️ image collected | ${src} | ${JSON.stringify(category.imageMap[src])}`);
-            fs.appendFileSync(log, `☑️ image collected | ${src} | ${JSON.stringify(category.imageMap[src])}\n`, { encoding: 'utf-8' });
+            // console.log(`☑️ image collected | ${src} | ${JSON.stringify(category.imageMap[src])}`);
+            // fs.appendFileSync(log, `☑️ image collected | ${src} | ${JSON.stringify(category.imageMap[src])}\n`, { encoding: 'utf-8' });
             continue;
           }
           category.imageMap[src] = { count: category.nextCount };
