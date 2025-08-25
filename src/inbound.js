@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as process from 'node:process';
@@ -50,6 +51,8 @@ const main = async () => {
   } catch (_) {
     data = {};
   }
+  //
+  const md5Map = {};
   const tesserartSkipCategory = [ '243', '244', '295', '318' ];
   const externalOcr = {};
   Object.keys(allConfig.inbound.ocr).map((k) => {
@@ -109,21 +112,41 @@ const main = async () => {
         value.eagleName = `1999120${x[0]}_0${x[1]}0${x[2]}0${y[0]}_${y[1]}${y[2]}${y[3]}.jpg`;
         //
         filePath = `${allConfig.runtime.wkdir}${path.sep}zgq${path.sep}${value.eagleName}`;
-        const fileStream = fs.createWriteStream(filePath);
-        await fetch(url).then((res) => {
-          return new Promise((resolve, reject) => {
-            res.body.pipe(fileStream);
-            res.body.on('error', reject);
-            fileStream.on('finish', resolve);
+        try {
+          await fetch(url).then((res) => {
+            const ws = fs.createWriteStream(filePath);
+            return new Promise((resolve, reject) => {
+              res.body.pipe(ws);
+              res.body.on('error', reject);
+              ws.on('finish', resolve);
+              ws.on('error', reject);
+            });
           });
-        }).catch((e) => {
           //
+          await new Promise((resolve, reject) => {
+            const rs = fs.createReadStream(filePath);
+            const md5Hash = crypto.createHash('md5');
+            rs.on('data', (data) => { md5Hash.update(data); });
+            rs.on('end', () => {
+              value.md5 = md5Hash.digest('hex');
+              rs.close();
+              if (md5Map[value.md5]) {
+                value.duplicate = true;
+              } else {
+                md5Map[value.md5] = value.md5;
+              }
+              resolve();
+            });
+            rs.on('error', reject);
+          });
+        } catch (e) {
           console.log(`🛑 image inbound failed| ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
           fs.appendFileSync(log, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
           fs.appendFileSync(logError, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
           failed = true;
           imageFailNumber += 1;
-        });
+        }
+        //
         imageDownloadNumber += 1;
       } else {
         filePath = `${allConfig.runtime.wkdir}${path.sep}zgq${path.sep}${value.eagleName}`;
@@ -148,7 +171,7 @@ const main = async () => {
         value.eagleUrl = url;
       }
       // add to eagle
-      if (!value.eagleId) {
+      if (!value.eagleId && !value.duplicate) {
         if (!eagleFolder) {
           eagle.init();
           eagleFolder = await eagle.updateFolder({ name: '.zengguanqiang.cn', parentName: '.import' });
