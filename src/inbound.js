@@ -49,7 +49,8 @@ const main = async () => {
     console.log(`Data is loaded from "[${json}]".`);
     fs.appendFileSync(log, `Data is loaded from "[${json}]".\n`, { encoding: 'utf-8' });
   } catch (_) {
-    data = {};
+    console.log(`Data file "[${json}]" is not existent or invalid.`);
+    return 1;
   }
   //
   const md5Map = {};
@@ -140,9 +141,9 @@ const main = async () => {
             rs.on('error', reject);
           });
         } catch (e) {
-          console.log(`🛑 image inbound failed| ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
-          fs.appendFileSync(log, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-          fs.appendFileSync(logError, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          console.log(`🛑 image inbound failed| ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+          fs.appendFileSync(log, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          fs.appendFileSync(logError, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
           failed = true;
           imageFailNumber += 1;
         }
@@ -155,7 +156,7 @@ const main = async () => {
         continue;
       }
       // ocr
-      if (!value.ocr) {
+      if (!value.ocr && !value.duplicate) {
         value.ocr = {};
         value.ocr['tesserart.en-US'] = tesserartSkipCategory.includes(categoryId) ? undefined : ((await worker.recognize(filePath, { rectangle: { width: 730, height: 24 } }))?.data?.text || undefined);
         Object.keys(externalOcr).map((k) => {
@@ -163,7 +164,7 @@ const main = async () => {
         });
       }
       // description
-      if (!(typeof value.description === 'string')) {
+      if (!(typeof value.description === 'string') && !value.duplicate) {
         value.description = utils.ocrToDescription({ ocrText: value.ocr['tesserart.en-US'] || value.ocr?.['umi.zh-CN'], filename: value.filename });
       }
       // url
@@ -202,9 +203,9 @@ const main = async () => {
           }),
           folderId: eagleFolder.id,
         }).catch((e) => {
-          console.log(`🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
-          fs.appendFileSync(log, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-          fs.appendFileSync(logError, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          console.log(`🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+          fs.appendFileSync(log, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          fs.appendFileSync(logError, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
           failed = true;
           imageFailNumber += 1;
         });
@@ -222,8 +223,8 @@ const main = async () => {
       });
       category.imageMap[url] = sortedValue;
       //
-      console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image inbounded | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
-      fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image inbounded | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+      console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image inbounded | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+      fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image inbounded | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
     }
     console.log(`✅ [${String(categoryNumber).padStart(4, '0')}] category inbounded | ${categoryId} | ${category.title}`);
     fs.appendFileSync(log, `✅ [${String(categoryNumber).padStart(4, '0')}] category inbounded | ${categoryId} | ${category.title}\n`, { encoding: 'utf-8' });

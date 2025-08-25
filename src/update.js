@@ -41,7 +41,8 @@ const main = async () => {
     //
     console.log(`Data is loaded from "[${json}]".`);
   } catch (_) {
-    data = {};
+    console.log(`Data file "[${json}]" is not existent or invalid.`);
+    return 1;
   }
   //
   const timer = setInterval(() => {
