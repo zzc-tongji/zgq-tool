@@ -4,7 +4,8 @@
   "scripts": {
     "eslint": "eslint --fix .",
     "scrape": "node src/scrape.js",
-    "inbound": "node src/inbound.js"
+    "inbound": "node src/inbound.js",
+    "update": "node src/update.js"
   },
   "type": "module",
   "repository": "https://github.com/zzc-tongji/zgq-tool",

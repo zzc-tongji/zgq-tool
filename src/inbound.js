@@ -58,7 +58,15 @@ const main = async () => {
   const externalOcr = {};
   Object.keys(allConfig.inbound.ocr).map((k) => {
     const v = allConfig.inbound.ocr[k];
-    const jsonlText = fs.readFileSync(`${allConfig.runtime.wkdir}${path.sep}${v}`, { encoding: 'utf-8' });
+    let jsonlText;
+    try {
+      jsonlText = fs.readFileSync(`${allConfig.runtime.wkdir}${path.sep}${v}`, { encoding: 'utf-8' });
+    } catch (e) {
+      console.log(`🛑 external ORC file not found | ${allConfig.runtime.wkdir}${path.sep}${v} | ${e.message}`);
+      fs.appendFileSync(log, `🛑 external ORC file not found | ${allConfig.runtime.wkdir}${path.sep}${v} | ${e.message}\n`, { encoding: 'utf-8' });
+      fs.appendFileSync(errorLog, `🛑 external ORC file not found | ${allConfig.runtime.wkdir}${path.sep}${v} | ${e.message}\n`, { encoding: 'utf-8' });
+      return;
+    }
     jsonlText.split('\n').map((line) => {
       let d;
       try {
@@ -141,7 +149,7 @@ const main = async () => {
             rs.on('error', reject);
           });
         } catch (e) {
-          console.log(`🛑 image inbound failed| ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+          console.log(`🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}`);
           fs.appendFileSync(log, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
           fs.appendFileSync(errorLog, `🛑 image inbound failed | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
           failed = true;
@@ -156,11 +164,22 @@ const main = async () => {
         continue;
       }
       // ocr
-      if (!value.ocr && !value.duplicate) {
-        value.ocr = {};
-        value.ocr['tesserart.en-US'] = tesserartSkipCategory.includes(categoryId) ? undefined : ((await worker.recognize(filePath, { rectangle: { width: 730, height: 24 } }))?.data?.text || undefined);
+      if (!value.duplicate) {
+        if (!value.ocr) {
+          value.ocr = {};
+          value.eagleUpdate = !!value.eagleId;
+        }
+        if (typeof value.ocr['tesserart.en-US'] !== 'string') {
+          value.ocr['tesserart.en-US'] = tesserartSkipCategory.includes(categoryId) ? undefined : ((await worker.recognize(filePath, { rectangle: { width: 730, height: 24 } }))?.data?.text || undefined);
+          value.eagleUpdate = !!value.eagleId;
+        }
         Object.keys(externalOcr).map((k) => {
-          value.ocr[k] = externalOcr[k][value.eagleName];
+          if (typeof value.ocr[k] !== 'string') {
+            value.ocr[k] = externalOcr[k][value.eagleName];
+            if (typeof value.ocr[k] === 'string') {
+              value.eagleUpdate = !!value.eagleId;
+            }
+          }
         });
       }
       // description
