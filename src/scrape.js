@@ -31,6 +31,10 @@ const main = async () => {
   }
   // read
   const json = `${allConfig.runtime.wkdir}${path.sep}data.zgq.json`;
+  const log = `${allConfig.runtime.wkdir}${path.sep}log.scrape.zgq.txt`;
+  fs.writeFileSync(log, '', { encoding: 'utf-8' });
+  const errorLog = `${allConfig.runtime.wkdir}${path.sep}log.error.scrape.zgq.txt`;
+  fs.writeFileSync(errorLog, '', { encoding: 'utf-8' });
   let data;
   try {
     data = JSON.parse(fs.readFileSync(json, { encoding: 'utf-8' }));
@@ -52,6 +56,7 @@ const main = async () => {
     const categoryId = parseInt(/\/cid\/([0-9]+).html/.exec(url)[1]);
     if (data[categoryId]) {
       console.log(`☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
+      fs.appendFileSync(log, `☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}\n`, { encoding: 'utf-8' });
       continue;
     }
     data[0].subCategoryList || (data[0].subCategoryList = []);
@@ -61,6 +66,7 @@ const main = async () => {
     //
     data[categoryId] = { title, url: `${host}/search/index.html?cid=${categoryId}&page_size=500` };
     console.log(`✅ category fetched | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
+    fs.appendFileSync(log, `✅ category fetched | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}\n`, { encoding: 'utf-8' });
   }
   // 2st category
   temp = Object.keys(data);
@@ -86,10 +92,12 @@ const main = async () => {
       //
       if (data[categoryId]) {
         console.log(`☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
+        fs.appendFileSync(log, `☑️ category collected | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}\n`, { encoding: 'utf-8' });
         continue;
       }
       data[categoryId] = { title, url: `${host}/search/index.html?cid=${categoryId}&page_size=500`, nextCount: 1 };
       console.log(`✅ category fetched | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}`);
+      fs.appendFileSync(log, `✅ category fetched | ${categoryId} | ${JSON.stringify({ ...data[categoryId], imageMap: undefined })}\n`, { encoding: 'utf-8' });
     }
   }
   // image
@@ -114,19 +122,23 @@ const main = async () => {
           category.imageMap || (category.imageMap = {});
           if (category.imageMap[src] || imageMap[src]) {
             console.log(`☑️ image collected | ${src} | ${JSON.stringify(category.imageMap[src])}`);
+            fs.appendFileSync(log, `☑️ image collected | ${src} | ${JSON.stringify(category.imageMap[src])}\n`, { encoding: 'utf-8' });
             continue;
           }
           category.imageMap[src] = { count: category.nextCount };
           category.nextCount += 1;
           imageMap[src] = true;
           console.log(`✅ image fetched | ${src} | ${JSON.stringify(category.imageMap[src])}`);
+          fs.appendFileSync(log, `✅ image fetched | ${src} | ${JSON.stringify(category.imageMap[src])}\n`, { encoding: 'utf-8' });
         }
         console.log(`✅ page fetched | ${String(j).padStart(2, '0')} of ${String(totalPage).padStart(2, '0')} | ${category.title}`);
+        fs.appendFileSync(log, `✅ page fetched | ${String(j).padStart(2, '0')} of ${String(totalPage).padStart(2, '0')} | ${category.title}\n`, { encoding: 'utf-8' });
       }
     }
   };
   await handleCategory(data[0]);
   console.log(`✅ finish get info of ${Object.keys(imageMap).length} image(s) in ${Object.keys(data).length - 1} category(s)${allConfig.scrape.updateMode ? ' in (update mode)' : ''}`);
+  fs.appendFileSync(log, `✅ finish get info of ${Object.keys(imageMap).length} image(s) in ${Object.keys(data).length - 1} category(s)${allConfig.scrape.updateMode ? ' in (update mode)' : ''}\n`, { encoding: 'utf-8' });
   // write
   fs.writeFileSync(json, JSON.stringify(data, null, 2), { encoding: 'utf-8' });
   console.log(`Data is stored to "[${json}]".`);
