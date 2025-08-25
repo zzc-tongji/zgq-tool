@@ -117,7 +117,7 @@ const main = async () => {
       // }
       //
       // update
-      if (!value.eagleFixed && value.eagleId && value.eagleUpdate) {
+      if (value.eagleId && value.eagleUpdate) {
         await eagle.post('/api/item/update', {
           id: value.eagleId,
           name: value.eagleName,
