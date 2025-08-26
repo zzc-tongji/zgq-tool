@@ -104,18 +104,16 @@ const main = async () => {
         }
       }
       // description
-      //
-      // if (!value.eagleFixed && value.ocr && (typeof value.description === 'string')) {
-      //   let text;
-      //   // DESCRIPTION UPDATE - BEGIN
-      //   // text = utils.ocrToDescription({ ocrText: value.ocr['tesserart.en-US'] || value.ocr?.['umi.zh-CN'], filename: value.filename });
-      //   // DESCRIPTION UPDATE - END
-      //   if (value.description !== text) {
-      //     value.description = text;
-      //     value.eagleUpdate = true;
-      //   }
-      // }
-      //
+      if (!value.eagleFixed && value.ocr && (typeof value.description === 'string')) {
+        let text = null;
+        // DESCRIPTION UPDATE - BEGIN
+        // text = utils.ocrToDescription({ ocrText: value.ocr['tesserart.en-US'] || value.ocr?.['umi.zh-CN'], filename: value.filename });
+        // DESCRIPTION UPDATE - END
+        if (typeof text === 'string' && value.description !== text) {
+          value.description = text;
+          value.eagleUpdate = true;
+        }
+      }
       // update
       if (value.eagleId && value.eagleUpdate) {
         await eagle.post('/api/item/update', {
@@ -133,6 +131,11 @@ const main = async () => {
           fs.appendFileSync(errorLog, `🛑 image updated fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
         });
         delete value.eagleUpdate;
+        const sortedValue = {};
+        Object.keys(value).sort().map((k) => {
+          sortedValue[k] = value[k];
+        });
+        category.imageMap[url] = sortedValue;
         imageNumber += 1;
         console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image updated | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
         fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image updated | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
