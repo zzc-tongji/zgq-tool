@@ -176,9 +176,6 @@ const main = async () => {
         Object.keys(externalOcr).map((k) => {
           if (typeof value.ocr[k] !== 'string') {
             value.ocr[k] = externalOcr[k][value.eagleName];
-            if (typeof value.ocr[k] === 'string') {
-              value.eagleUpdate = !!value.eagleId;
-            }
           }
         });
       }
