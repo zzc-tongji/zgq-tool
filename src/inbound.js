@@ -169,15 +169,24 @@ const main = async () => {
           value.ocr = {};
           value.eagleUpdate = !!value.eagleId;
         }
+        let updated = false;
         if (typeof value.ocr['tesserart.en-US'] !== 'string') {
-          value.ocr['tesserart.en-US'] = tesserartSkipCategory.includes(categoryId) ? undefined : ((await worker.recognize(filePath, { rectangle: { width: 730, height: 24 } }))?.data?.text || undefined);
-          value.eagleUpdate = !!value.eagleId;
+          value.ocr['tesserart.en-US'] = tesserartSkipCategory.includes(categoryId) ? '' : ((await worker.recognize(filePath, { rectangle: { width: 730, height: 24 } }))?.data?.text || '');
+          updated = true;
         }
         Object.keys(externalOcr).map((k) => {
-          if (typeof value.ocr[k] !== 'string') {
+          if (typeof value.ocr[k] !== 'string' && typeof externalOcr[k][value.eagleName] === 'string') {
             value.ocr[k] = externalOcr[k][value.eagleName];
+            updated = true;
           }
         });
+        if (updated) {
+          const sortedOcrValue = {};
+          Object.keys(value.ocr).sort().map((k) => {
+            sortedOcrValue[k] = value.ocr[k];
+          });
+          value.ocr = sortedOcrValue;
+        }
       }
       // description
       if (!(typeof value.description === 'string') && !value.duplicate) {
