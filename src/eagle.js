@@ -37,7 +37,8 @@ const get = async (path, queryString = '') => {
       }
     }
   if (!response.ok) {
-    throw new Error(`eagle | invalid path | path = ${path}`);
+    const data = await response.json();
+    throw new Error(`eagle | ${data.data}`);
   }
   return await response.json();
 };
