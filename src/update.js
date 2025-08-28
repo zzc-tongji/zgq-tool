@@ -70,9 +70,9 @@ const main = async () => {
       // ocr
       if (!value.eagleFixed && value.eagleId) {
         const eagleData = (await eagle.get('/api/item/info', `id=${value.eagleId}`).catch((e) => {
-          console.log(`🛑 image updated fail | /api/item/info | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
-          fs.appendFileSync(log, `🛑 image updated fail | /api/item/info | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-          fs.appendFileSync(errorLog, `🛑 image updated fail | /api/item/info | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          console.log(`🛑 image get fail | /api/item/info | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+          fs.appendFileSync(log, `🛑 image get fail | /api/item/info | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          fs.appendFileSync(errorLog, `🛑 image get fail | /api/item/info | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
         }))?.data || null;
         if (eagleData) {
           for (let i = 0; i < eagleData.tags.length; i++) {
@@ -128,9 +128,9 @@ const main = async () => {
             category: { id: categoryId, name: category.name, url: category.url },
           }),
         }).catch((e) => {
-          console.log(`🛑 image updated fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
-          fs.appendFileSync(log, `🛑 image updated fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-          fs.appendFileSync(errorLog, `🛑 image updated fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          console.log(`🛑 image update fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+          fs.appendFileSync(log, `🛑 image update fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          fs.appendFileSync(errorLog, `🛑 image update fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
         });
         delete value.eagleUpdate;
         const sortedValue = {};
