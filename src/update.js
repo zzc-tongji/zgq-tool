@@ -73,33 +73,35 @@ const main = async () => {
           console.log(`🛑 image updated fail | /api/item/info | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
           fs.appendFileSync(log, `🛑 image updated fail | /api/item/info | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
           fs.appendFileSync(errorLog, `🛑 image updated fail | /api/item/info | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-        })).data;
-        for (let i = 0; i < eagleData.tags.length; i++) {
-          const t = eagleData.tags[i];
-          const tt = t.split('=');
-          if (tt < 2) {
-            return;
-          }
-          if (tt[0] === '_ocr') {
-            if (tt[1] === 'prefix-only') {
-              let v = value.description.split(' ')[0];
-              v = v.split('-');
-              if (v.length >= 2) {
-                value.description = `${v[0]}-${v[1]}`;
-              } else {
-                let temp;
-                if ((temp = /([A-Za-z]+)[\s\S]*([0-9]+)/.exec(value.filename))) {
-                  value.description = `${temp[1]}-${temp[2]}`;
-                } else {
-                  value.description = v[0];
-                }
-              }
-            } else {
-              value.description = await utils.ocrToDescription({ ocrText: value?.ocr?.[tt[1]], filename: value.filename });
+        }))?.data || null;
+        if (eagleData) {
+          for (let i = 0; i < eagleData.tags.length; i++) {
+            const t = eagleData.tags[i];
+            const tt = t.split('=');
+            if (tt < 2) {
+              return;
             }
-            eagleData.tags.splice(i, 1);
-            i -= 1;
-            value.eagleUpdate = true;
+            if (tt[0] === '_ocr') {
+              if (tt[1] === 'prefix-only') {
+                let v = value.description.split(' ')[0];
+                v = v.split('-');
+                if (v.length >= 2) {
+                  value.description = `${v[0]}-${v[1]}`;
+                } else {
+                  let temp;
+                  if ((temp = /([A-Za-z]+)[\s\S]*([0-9]+)/.exec(value.filename))) {
+                    value.description = `${temp[1]}-${temp[2]}`;
+                  } else {
+                    value.description = v[0];
+                  }
+                }
+              } else {
+                value.description = await utils.ocrToDescription({ ocrText: value?.ocr?.[tt[1]], filename: value.filename });
+              }
+              eagleData.tags.splice(i, 1);
+              i -= 1;
+              value.eagleUpdate = true;
+            }
           }
         }
       }
