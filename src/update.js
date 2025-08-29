@@ -81,26 +81,44 @@ const main = async () => {
             if (tt < 2) {
               return;
             }
-            if (tt[0] === '_ocr') {
-              if (tt[1] === 'prefix-only') {
-                let v = value.description.split(' ')[0];
-                v = v.split('-');
-                if (v.length >= 2) {
-                  value.description = `${v[0]}-${v[1]}`;
-                } else {
-                  let temp;
-                  if ((temp = /([A-Za-z]+)[\s\S]*([0-9]+)/.exec(value.filename))) {
-                    value.description = `${temp[1]}-${temp[2]}`;
+            if (tt[0] === '_op') {
+              const ttt = tt[1].split('/');
+              if (ttt[0] === 'ocr') {
+                if (ttt[1] === 'prefix-only') {
+                  let v = value.description.split(' ')[0];
+                  v = v.split('-');
+                  if (v.length >= 2) {
+                    value.description = `${v[0]}-${v[1]}`;
                   } else {
-                    value.description = v[0];
+                    let temp;
+                    if ((temp = /([A-Za-z]+)[\s\S]*([0-9]+)/.exec(value.filename))) {
+                      value.description = `${temp[1]}-${temp[2]}`;
+                    } else {
+                      value.description = v[0];
+                    }
+                  }
+                } else { // external OCR
+                  value.description = await utils.ocrToDescription({ ocrText: value?.ocr?.[ttt[1]], filename: value.filename });
+                }
+                value.eagleUpdate = true;
+              } else if (ttt[0] === 'back') {
+                let desc;
+                try {
+                  desc = JSON.parse(eagleData.annotation);
+                } catch (error) {
+                  if (!eagleData.annotation) {
+                    desc = {};
+                  } else {
+                    const d = eagleData.annotation.replaceAll(/\u003ca[\s]+?[\s\S]*?\u003e/g, '').replaceAll(/\u003c\/a\u003e/g, '');
+                    desc = JSON.parse(d);
                   }
                 }
-              } else {
-                value.description = await utils.ocrToDescription({ ocrText: value?.ocr?.[tt[1]], filename: value.filename });
+                value.description = desc.description;
+                value.eagleFixed = true;
+                value.eagleUpdate = true;
               }
               eagleData.tags.splice(i, 1);
               i -= 1;
-              value.eagleUpdate = true;
             }
           }
         }
