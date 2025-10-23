@@ -222,8 +222,9 @@ const main = async () => {
           website: value.eagleUrl,
           tags: tags,
           annotation: JSON.stringify({
-            title: value.filename,
+            price: value.price,
             description: value.description,
+            title: value.filename,
             category: { id: categoryId, name: category.name, url: category.url },
           }),
           folderId: eagleFolder.id,

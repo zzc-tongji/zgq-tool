@@ -166,8 +166,9 @@ const main = async () => {
             name: value.eagleName,
             url: value.eagleUrl,
             annotation: JSON.stringify({
-              title: value.filename,
+              price: value.price,
               description: value.description,
+              title: value.filename,
               category: { id: categoryId, name: category.name, url: category.url },
             }),
           }).catch((e) => {
