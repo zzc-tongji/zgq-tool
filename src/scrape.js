@@ -116,6 +116,7 @@ const main = async () => {
         html = await utils.getHtmlByFetch({ url });
         $ = cheerio.load(html);
         const imgList = $('ul.search-list img.goods-images');
+        const priceList = $('ul.search-list p.price strong');
         for (let i = imgList.length - 1; i >= 0; i--) {
           const aEl = imgList.eq(i);
           const src = encodeURI(aEl.attr('src'));
@@ -125,7 +126,10 @@ const main = async () => {
             // fs.appendFileSync(log, `☑️ image collected | ${src} | ${JSON.stringify(category.imageMap[src])}\n`, { encoding: 'utf-8' });
             continue;
           }
-          category.imageMap[src] = { count: category.nextCount };
+          category.imageMap[src] = {
+            count: category.nextCount,
+            price: `${(priceList.eq(i) ? (/([+-]?((0|[1-9]\d*)?\.\d+|[1-9]\d*))/.exec(priceList.eq(i))[1] || 0) : 0)} CNY`,
+          };
           category.nextCount += 1;
           imageMap[src] = true;
           console.log(`✅ image fetched | ${src} | ${JSON.stringify(category.imageMap[src])}`);
