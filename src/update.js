@@ -36,6 +36,33 @@ const main = async () => {
   const errorLog = `${allConfig.runtime.wkdir}${path.sep}log.error.update.zgq.txt`;
   fs.writeFileSync(errorLog, '', { encoding: 'utf-8' });
   //
+  const externalOcr = {};
+  Object.keys(allConfig.inbound.ocr).map((k) => {
+    const v = allConfig.inbound.ocr[k];
+    let jsonlText;
+    try {
+      jsonlText = fs.readFileSync(`${allConfig.runtime.wkdir}${path.sep}${v}`, { encoding: 'utf-8' });
+    } catch (e) {
+      console.log(`🛑 external ORC file not found | ${allConfig.runtime.wkdir}${path.sep}${v} | ${e.message}`);
+      fs.appendFileSync(log, `🛑 external ORC file not found | ${allConfig.runtime.wkdir}${path.sep}${v} | ${e.message}\n`, { encoding: 'utf-8' });
+      fs.appendFileSync(errorLog, `🛑 external ORC file not found | ${allConfig.runtime.wkdir}${path.sep}${v} | ${e.message}\n`, { encoding: 'utf-8' });
+      return;
+    }
+    jsonlText.split('\n').map((line) => {
+      let d;
+      try {
+        d = JSON.parse(line);
+      } catch (_) {
+        return;
+      }
+      if (!d?.fileName || !d?.data[0]?.text) {
+        return;
+      }
+      externalOcr[k] || (externalOcr[k] = {});
+      externalOcr[k][d.fileName] = d.data[0].text;
+    });
+  });
+  //
   let data;
   try {
     data = JSON.parse(fs.readFileSync(json, { encoding: 'utf-8' }));
@@ -106,7 +133,13 @@ const main = async () => {
               }
             }
           } else { // external OCR, for example, eagle tag "_op=ocr/umi.zh-CN"
-            value.description = await utils.ocrToDescription({ ocrText: value?.ocr?.[ttt[1]], filename: value.filename });
+            if (!value.ocr) {
+              value.ocr = {};
+            }
+            if (!value.ocr[ttt[1]]) {
+              value.ocr[ttt[1]] = externalOcr?.[ttt[1]]?.[value.eagleName];
+            }
+            value.description = await utils.ocrToDescription({ ocrText: value.ocr[ttt[1]], filename: value.filename });
           }
           value.eagleUpdate = true;
         } else if (ttt[0] === 'back') { // eagle tag "_op=back"
