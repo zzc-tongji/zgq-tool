@@ -11,6 +11,34 @@ import * as setting from './setting.js';
 import * as eagle from './eagle.js';
 import * as utils from './utils.js';
 
+const tagMap = {
+  csg: 'madmanmovies.com',
+};
+
+const updateTagListFromCategory = ({ category, tagList = [] }) => {
+  const titleList = [];
+  const splitIndex = category.title.indexOf('-');
+  if (splitIndex < 0) {
+    titleList.push(category.title);
+  } else {
+    titleList.push(category.title.slice(0, splitIndex), category.title.slice(splitIndex + 1));
+    tagMap[titleList[1]] && titleList.push(tagMap[titleList[1]]);
+  }
+  const tags = JSON.parse(JSON.stringify(tagList));
+  titleList.map((t, i) => {
+    if (!t) {
+      return;
+    }
+    if (i < 2) {
+      tags.push(`_tag=zengguanqiang.cn/${t}`);
+    }
+    tags.push(`_union_tag=${t}`);
+  });
+  return tags.filter((item, index, self) => {
+    return self.indexOf(item) === index;
+  });
+};
+
 const main = async () => {
   // get parameter
   const parser = new ArgumentParser({
@@ -35,7 +63,6 @@ const main = async () => {
   // prepare
   process.chdir(allConfig.runtime.wkdir);
   const worker = await createWorker('eng');
-  let eagleFolder = null;
   const json = `${allConfig.runtime.wkdir}${path.sep}data.zgq.json`;
   const log = `${allConfig.runtime.wkdir}${path.sep}log.inbound.zgq.txt`;
   fs.writeFileSync(log, '', { encoding: 'utf-8' });
@@ -52,9 +79,22 @@ const main = async () => {
     console.log(`Data file "[${json}]" is not existent or invalid.`);
     return 1;
   }
+  eagle.init();
   //
   const md5Map = {};
-  const tesserartSkipCategory = [ '243', '244', '295', '318' ];
+  Object.keys(data).map((k1) => {
+    const ctg = data[k1];
+    if (!ctg.imageMap) {
+      return;
+    }
+    Object.keys(ctg.imageMap).map((k2) => {
+      const val = ctg.imageMap[k2];
+      if (val.duplicate) {
+        return;
+      }
+      md5Map[val.md5] = val;
+    });
+  });
   const externalOcr = {};
   Object.keys(allConfig.inbound.ocr).map((k) => {
     const v = allConfig.inbound.ocr[k];
@@ -81,9 +121,6 @@ const main = async () => {
       externalOcr[k][d.fileName] = d.data[0].text;
     });
   });
-  const tagMap = {
-    csg: 'madmanmovies.com',
-  };
   //
   let categoryNumber = 0;
   let imageNumber = 0;
@@ -142,7 +179,7 @@ const main = async () => {
               if (md5Map[value.md5]) {
                 value.duplicate = true;
               } else {
-                md5Map[value.md5] = value.md5;
+                md5Map[value.md5] = value;
               }
               resolve();
             });
@@ -171,7 +208,7 @@ const main = async () => {
         }
         let updated = false;
         if (typeof value.ocr['tesserart.en-US'] !== 'string') {
-          value.ocr['tesserart.en-US'] = tesserartSkipCategory.includes(categoryId) ? '' : ((await worker.recognize(filePath, { rectangle: { width: 730, height: 24 } }))?.data?.text || '');
+          value.ocr['tesserart.en-US'] = (await worker.recognize(filePath, { rectangle: { width: 730, height: 24 } }))?.data?.text || '';
           updated = true;
         }
         Object.keys(externalOcr).map((k) => {
@@ -198,23 +235,9 @@ const main = async () => {
       }
       // add to eagle
       if (!value.eagleId && !value.duplicate) {
-        if (!eagleFolder) {
-          eagle.init();
-          eagleFolder = await eagle.updateFolder({ name: '.zengguanqiang.cn', parentName: '.import' });
-        }
+        const eagleFolder = await eagle.updateFolder({ name: '.zengguanqiang.cn', parentName: '.import' });
         //
-        const tags = [ '_login=false', '_source=zengguanqiang.cn' ];
-        const titleList = category.title.split('-');
-        titleList.push(tagMap[titleList[1] || '']);
-        titleList.map((t, i) => {
-          if (!t) {
-            return;
-          }
-          if (i < 2) {
-            tags.push(`_tag=zengguanqiang.cn/${t}`);
-          }
-          tags.push(`_union_tag=${t}`);
-        });
+        const tags = updateTagListFromCategory({ category, tagList: [ '_login=false', '_source=zengguanqiang.cn' ] });
         //
         const eagleItem = await eagle.post('/api/item/addFromPath', {
           path: filePath,
@@ -244,6 +267,29 @@ const main = async () => {
         //
         console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image inbounded | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}`);
         fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image inbounded | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.duplicate ? '(duplicate)' : value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+      }
+      //
+      if (value.duplicate && !value.tagged) {
+        const dupVal = md5Map[value.md5];
+        const dupCatId = /\d{7}(\d)_\d(\d)\d(\d)\d{2}_\d{3}/.exec(dupVal.eagleName).slice(1).join('');
+        const dupCat = data[dupCatId];
+        const eagleData = (await eagle.get('/api/item/info', `id=${dupVal.eagleId}`).catch((e) => {
+          console.log(`🛑 image get fail | /api/item/info | ${e.message} | ${dupCatId} | ${dupCat.title} | ${dupVal.count} | ${dupVal.eagleName} | ${dupVal.eagleId} | ${dupVal.description ? dupVal.description : '(empty)'}`);
+          fs.appendFileSync(log, `🛑 image get fail | /api/item/info | ${e.message} | ${dupCatId} | ${dupCat.title} | ${dupVal.count} | ${dupVal.eagleName} | ${dupVal.eagleId} | ${dupVal.description ? dupVal.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          fs.appendFileSync(errorLog, `🛑 image get fail | /api/item/info | ${e.message} | ${dupCatId} | ${dupCat.title} | ${dupVal.count} | ${dupVal.eagleName} | ${dupVal.eagleId} | ${dupVal.description ? dupVal.description : '(empty)'}\n`, { encoding: 'utf-8' });
+        }))?.data || null;
+        if (eagleData) {
+          const tags = updateTagListFromCategory({ category, tagList: eagleData.tags });
+          await eagle.post('/api/item/update', {
+            id: eagleData.id,
+            tags,
+          }).catch((e) => {
+            console.log(`🛑 fail to update tag(s) for duplicated image | /api/item/update | ${e.message} | ${dupCatId} | ${dupCat.title} | ${dupVal.count} | ${dupVal.eagleName} | ${dupVal.eagleId}`);
+            fs.appendFileSync(log, `🛑 fail to update tag(s) for duplicated image | /api/item/update | ${e.message} | ${dupCatId} | ${dupCat.title} | ${dupVal.count} | ${dupVal.eagleName} | ${dupVal.eagleId}\n`, { encoding: 'utf-8' });
+            fs.appendFileSync(errorLog, `🛑 fail to update tag(s) for duplicated image | /api/item/update | ${e.message} | ${dupCatId} | ${dupCat.title} | ${dupVal.count} | ${dupVal.eagleName} | ${dupVal.eagleId}\n`, { encoding: 'utf-8' });
+          });
+        }
+        value.tagged = true;
       }
       //
       const sortedValue = {};

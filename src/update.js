@@ -106,9 +106,9 @@ const main = async () => {
         continue;
       }
       imageNumber += 1;
-      // handle item with eagle tag "_op=*"
+      //
       const eagleTagList = [ ...eagleData.tags ];
-      let needRemoveOperationTag = false;
+      let eagleAnnotation = eagleData.annotation;
       //
       for (let i = 0; i < eagleTagList.length; i++) {
         const t = eagleTagList[i];
@@ -116,7 +116,6 @@ const main = async () => {
         if (tt < 2 || tt[0] !== '_op') {
           continue;
         }
-        needRemoveOperationTag = true;
         const ttt = tt[1].split('/');
         if (ttt[0] === 'ocr') {
           if (ttt[1] === 'prefix-only') { // eagle tag "_op=ocr/prefix-only"
@@ -150,8 +149,11 @@ const main = async () => {
             if (!eagleData.annotation) {
               desc = {};
             } else {
-              const d = eagleData.annotation.replaceAll(/\u003ca[\s]+?[\s\S]*?\u003e/g, '').replaceAll(/\u003c\/a\u003e/g, '');
+              const d = eagleData.annotation.replaceAll(/\u003ca[\s]+?[\s\S]*?\u003e/g, '').replaceAll(/\u003c\/a\u003e/g, '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ');
               desc = JSON.parse(d);
+              // fix description as valid JSON
+              eagleAnnotation = d;
+              value.eagleUpdate = true;
             }
           }
           // download meta from eagle
@@ -163,61 +165,30 @@ const main = async () => {
           console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image updated | ⬅️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
           fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image updated | ⬅️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
         }
-        // prepare to remove eagle tag "_op=*"
-        eagleTagList.splice(i, 1);
-        i -= 1;
+        // remove eagle tag "_op=*"
+        eagleTagList.splice(i, 1) && (i -= 1);
+        value.eagleUpdate = true;
       }
-      if (needRemoveOperationTag) {
-        // update eagle tag without "_op=*"
+      if (value.eagleUpdate) {
         await eagle.post('/api/item/update', {
           id: value.eagleId,
+          name: value.eagleName,
+          url: value.eagleUrl,
           tags: eagleTagList,
+          annotation: eagleAnnotation,
         }).catch((e) => {
-          console.log(`🛑 fail to remove tag "_op=*" for image | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId}`);
-          fs.appendFileSync(log, `🛑 fail to remove tag "_op=*" for image | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId}\n`, { encoding: 'utf-8' });
-          fs.appendFileSync(errorLog, `🛑 fail to remove tag "_op=*" for image | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId}\n`, { encoding: 'utf-8' });
+          console.log(`🛑 image update fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+          fs.appendFileSync(log, `🛑 image update fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
+          fs.appendFileSync(errorLog, `🛑 image update fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
         });
-        console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image tag "_op=*" removed | ➡️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId}`);
-        fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image tag "_op=*" removed | ➡️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId}\n`, { encoding: 'utf-8' });
-      }
-      if (!value.eagleManaged) {
-        // update description
-        if (value.ocr && (typeof value.description === 'string')) {
-          let text = null;
-          // DESCRIPTION UPDATE - BEGIN
-          // text = utils.ocrToDescription({ ocrText: value.ocr['tesserart.en-US'] || value.ocr?.['umi.zh-CN'], filename: value.filename });
-          // DESCRIPTION UPDATE - END
-          if (typeof text === 'string' && value.description !== text) {
-            value.description = text;
-            value.eagleUpdate = true;
-          }
-        }
-        // update
-        if (value.eagleUpdate) {
-          await eagle.post('/api/item/update', {
-            id: value.eagleId,
-            name: value.eagleName,
-            url: value.eagleUrl,
-            annotation: JSON.stringify({
-              price: value.price,
-              description: value.description,
-              title: value.filename,
-              category: { id: categoryId, name: category.name, url: category.url },
-            }),
-          }).catch((e) => {
-            console.log(`🛑 image update fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
-            fs.appendFileSync(log, `🛑 image update fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-            fs.appendFileSync(errorLog, `🛑 image update fail | /api/item/update | ${e.message} | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-          });
-          delete value.eagleUpdate;
-          const sortedValue = {};
-          Object.keys(value).sort().map((k) => {
-            sortedValue[k] = value[k];
-          });
-          category.imageMap[url] = sortedValue;
-          console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image updated | ➡️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
-          fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image updated | ➡️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
-        }
+        delete value.eagleUpdate;
+        const sortedValue = {};
+        Object.keys(value).sort().map((k) => {
+          sortedValue[k] = value[k];
+        });
+        category.imageMap[url] = sortedValue;
+        console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image updated | ➡️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
+        fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image updated | ➡️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
       }
     }
     console.log(`✅ [${String(categoryNumber).padStart(4, '0')}] category updated | ${categoryId} | ${category.title}`);
