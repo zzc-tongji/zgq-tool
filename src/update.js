@@ -127,9 +127,7 @@ const main = async () => {
             // fix description as valid JSON
             const d = eagleData.annotation.replaceAll(/\u003ca[\s]+?[\s\S]*?\u003e/g, '').replaceAll(/\u003c\/a\u003e/g, '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ');
             anno = JSON.parse(d);
-            // mark as update needed
             eagleAnnotation = JSON.stringify(anno);
-            value.eagleUpdate = true;
           }
         }
         //
@@ -157,10 +155,8 @@ const main = async () => {
             }
             value.description = await utils.ocrToDescription({ ocrText: value.ocr[ttt[1]], filename: value.filename });
           }
-          // mark as update needed
           anno.description = value.description;
           eagleAnnotation = JSON.stringify(anno);
-          value.eagleUpdate = true;
         } else if (ttt[0] === 'back') { // eagle tag "_op=back"
           // download meta from eagle
           value.description = anno.description;
@@ -174,6 +170,8 @@ const main = async () => {
         }
         // remove eagle tag "_op=*"
         eagleTagList.splice(i, 1) && (i -= 1);
+        // mark as update needed
+        value.eagleUrl = eagleData.url;
       }
       if (value.eagleUpdate) {
         await eagle.post('/api/item/update', {
