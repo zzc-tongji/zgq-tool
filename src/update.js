@@ -171,7 +171,7 @@ const main = async () => {
         // remove eagle tag "_op=*"
         eagleTagList.splice(i, 1) && (i -= 1);
         // mark as update needed
-        value.eagleUrl = eagleData.url;
+        value.eagleUpdate = true;
       }
       if (value.eagleUpdate) {
         await eagle.post('/api/item/update', {
