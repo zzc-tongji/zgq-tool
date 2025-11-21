@@ -116,6 +116,23 @@ const main = async () => {
         if (tt < 2 || tt[0] !== '_op') {
           continue;
         }
+        // get (or fix) item annotation from eagle
+        let anno;
+        try {
+          anno = JSON.parse(eagleData.annotation);
+        } catch (error) {
+          if (!eagleData.annotation) {
+            anno = {};
+          } else {
+            // fix description as valid JSON
+            const d = eagleData.annotation.replaceAll(/\u003ca[\s]+?[\s\S]*?\u003e/g, '').replaceAll(/\u003c\/a\u003e/g, '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ');
+            anno = JSON.parse(d);
+            // mark as update needed
+            eagleAnnotation = JSON.stringify(anno);
+            value.eagleUpdate = true;
+          }
+        }
+        //
         const ttt = tt[1].split('/');
         if (ttt[0] === 'ocr') {
           if (ttt[1] === 'prefix-only') { // eagle tag "_op=ocr/prefix-only"
@@ -140,34 +157,23 @@ const main = async () => {
             }
             value.description = await utils.ocrToDescription({ ocrText: value.ocr[ttt[1]], filename: value.filename });
           }
+          // mark as update needed
+          anno.description = value.description;
+          eagleAnnotation = JSON.stringify(anno);
           value.eagleUpdate = true;
         } else if (ttt[0] === 'back') { // eagle tag "_op=back"
-          let desc;
-          try {
-            desc = JSON.parse(eagleData.annotation);
-          } catch (error) {
-            if (!eagleData.annotation) {
-              desc = {};
-            } else {
-              const d = eagleData.annotation.replaceAll(/\u003ca[\s]+?[\s\S]*?\u003e/g, '').replaceAll(/\u003c\/a\u003e/g, '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ');
-              desc = JSON.parse(d);
-              // fix description as valid JSON
-              eagleAnnotation = d;
-              value.eagleUpdate = true;
-            }
-          }
           // download meta from eagle
-          value.description = desc.description;
+          value.description = anno.description;
           value.eagleName = `${eagleData.name}.${eagleData.ext}`;
           value.eagleUrl = eagleData.url;
-          // mark item as "eagle managed"
+          // mark as eagle managed
           value.eagleManaged = true;
+          //
           console.log(`✅ [${String(imageNumber).padStart(6, '0')}] image updated | ⬅️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}`);
           fs.appendFileSync(log, `✅ [${String(imageNumber).padStart(6, '0')}] image updated | ⬅️ eagle | ${categoryId} | ${category.title} | ${value.count} | ${value.eagleName} | ${value.eagleId} | ${value.description ? value.description : '(empty)'}\n`, { encoding: 'utf-8' });
         }
         // remove eagle tag "_op=*"
         eagleTagList.splice(i, 1) && (i -= 1);
-        value.eagleUpdate = true;
       }
       if (value.eagleUpdate) {
         await eagle.post('/api/item/update', {
